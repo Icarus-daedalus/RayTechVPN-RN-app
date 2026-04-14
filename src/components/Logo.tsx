@@ -12,9 +12,9 @@ export function Logo({ small = false }: LogoProps) {
   const theme = useAppStore((s) => s.theme);
   const tk = t(theme);
 
-  const fontSize = small ? 22 : 42;
-  const iconSize = small ? 18 : 34;
-  const gap = small ? 3 : 6;
+  const fontSize = small ? 36 : 42;
+  const iconSize = small ? 28 : 34;
+  const gap = small ? 5 : 6;
 
   return (
     <View style={[styles.row, { gap }]}>

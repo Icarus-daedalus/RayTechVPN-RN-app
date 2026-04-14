@@ -35,7 +35,7 @@ export const tokens = {
     primary: '#FFD700',
     primaryShadow: 'rgba(255,215,0,0.4)',
     // Header
-    headerBg: 'rgba(255,255,255,0.2)',
+    headerBg: 'rgba(255,255,255,0.3)',
     headerBorder: 'rgba(255,255,255,0.3)',
     // Divider
     divider: 'rgba(226,232,240,0.7)',
@@ -50,7 +50,7 @@ export const tokens = {
     // Drag handle
     dragHandle: '#D1D5DC',
     // Button styles
-    btnIconBg: 'rgba(255,255,255,0.25)',
+    btnIconBg: 'rgba(255,255,255,0.20)',
     // Overlay
     overlayBg: 'rgba(0,0,0,0.4)',
   },
@@ -103,7 +103,7 @@ export const tokens = {
     // Drag handle
     dragHandle: '#4B5563',
     // Button styles
-    btnIconBg: 'rgba(0,0,0,0.25)',
+    btnIconBg: 'rgba(0,0,0,0.20)',
     // Overlay
     overlayBg: 'rgba(0,0,0,0.5)',
   },

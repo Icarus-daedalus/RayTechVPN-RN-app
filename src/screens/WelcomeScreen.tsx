@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,11 +19,13 @@ import { Logo } from '@/components/Logo';
 import { useAppStore } from '@/store/useAppStore';
 import { t } from '@/theme/tokens';
 
+const LAUNCHED_KEY = '@raytechvpn:hasLaunched';
+
 const ITEMS = [
-  'Мы будем собирать только минимально необходимые данные для предоставления вам безопасного и стабильного VPN-опыта.',
+  'Мы будем собирать только минимально необходимые данные для предоставления вам безопасного и стабильного VPN-опыта. Для вашего удобства, вот ключевые точки данных, которые мы собираем:',
   'Сбор системного языка используется в основном для установки языка в приложении, но мы не сохраняем ваши данные о системном языке.',
-  'Чтобы предоставить вам самый быстрый список серверов, нам требуется ваш IP-адрес и системная страна/регион, но мы не сохраняем эти данные.',
-  'Мы строго придерживаемся нашей политики отсутствия логов и соответствующих законов о конфиденциальности, и приложим все усилия для защиты вашей безопасности.',
+  'Чтобы предоставить вам самый быстрый список серверов по умолчанию, нам требуется ваш IP-адрес и системная страна/регион, но мы не сохраняем эти данные.',
+  'Мы строго придерживаемся нашей политики отсутствия логов и соответствующих законов о конфиденциальности данных, и приложим все усилия для защиты вашей конфиденциальности и безопасности.',
 ];
 
 export default function WelcomeScreen() {
@@ -30,17 +33,22 @@ export default function WelcomeScreen() {
   const tk = t(theme);
   const insets = useSafeAreaInsets();
 
-  // Entrance animations
   const logoY = useSharedValue(-50);
   const logoOpacity = useSharedValue(0);
   const cardY = useSharedValue(50);
   const cardOpacity = useSharedValue(0);
 
   useEffect(() => {
-    logoY.value = withTiming(0, { duration: 700 });
-    logoOpacity.value = withTiming(1, { duration: 700 });
-    cardY.value = withDelay(200, withTiming(0, { duration: 700 }));
-    cardOpacity.value = withDelay(200, withTiming(1, { duration: 700 }));
+    AsyncStorage.getItem(LAUNCHED_KEY).then((val) => {
+      if (val) {
+        router.replace('/home');
+        return;
+      }
+      logoY.value = withTiming(0, { duration: 700 });
+      logoOpacity.value = withTiming(1, { duration: 700 });
+      cardY.value = withDelay(200, withTiming(0, { duration: 700 }));
+      cardOpacity.value = withDelay(200, withTiming(1, { duration: 700 }));
+    });
   }, []);
 
   const logoStyle = useAnimatedStyle(() => ({
@@ -52,6 +60,16 @@ export default function WelcomeScreen() {
     opacity: cardOpacity.value,
   }));
 
+  async function handleAccept() {
+    await AsyncStorage.setItem(LAUNCHED_KEY, '1');
+    router.replace('/home');
+  }
+
+  const cardBg =
+    theme === 'light' ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.08)';
+  const cardBorder =
+    theme === 'light' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)';
+
   return (
     <View
       style={[
@@ -60,7 +78,7 @@ export default function WelcomeScreen() {
       ]}
     >
       {/* Logo */}
-      <Animated.View style={[styles.logoWrap, logoStyle]}>
+      <Animated.View style={logoStyle}>
         <Logo />
       </Animated.View>
 
@@ -68,10 +86,7 @@ export default function WelcomeScreen() {
       <Animated.View
         style={[
           styles.card,
-          {
-            backgroundColor: tk.surface,
-            borderColor: tk.surfaceBorder,
-          },
+          { backgroundColor: cardBg, borderColor: cardBorder },
           cardStyle,
         ]}
       >
@@ -81,30 +96,21 @@ export default function WelcomeScreen() {
         </Text>
 
         <ScrollView
-          style={{ flex: 1 }}
+          style={{ flex: 1, backgroundColor: 'transparent' }}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
         >
           {ITEMS.map((item, i) => (
-            <View key={i} style={styles.listItem}>
-              <View style={[styles.bullet, { backgroundColor: tk.primary }]} />
-              <Text style={[styles.listText, { color: tk.text }]}>{item}</Text>
-            </View>
+            <Text key={i} style={[styles.listText, { color: tk.text }]}>
+              {item}
+            </Text>
           ))}
         </ScrollView>
 
         <TouchableOpacity
-          onPress={() => router.replace('/home')}
+          onPress={handleAccept}
           activeOpacity={0.88}
-          style={[
-            styles.acceptBtn,
-            {
-              shadowColor: tk.primary,
-              shadowOpacity: 0.4,
-              shadowRadius: 16,
-              shadowOffset: { width: 0, height: 0 },
-            },
-          ]}
+          style={styles.acceptBtn}
         >
           <Text style={styles.acceptBtnText}>Согласиться и продолжить</Text>
         </TouchableOpacity>
@@ -116,52 +122,35 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     alignItems: 'center',
-    gap: 32,
-  },
-  logoWrap: {
-    marginTop: 8,
+    gap: 48,
   },
   card: {
     flex: 1,
     width: '100%',
-    maxHeight: 520,
+    maxHeight: 500,
     borderRadius: 32,
     padding: 24,
     borderWidth: 1,
     gap: 16,
     shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
+    shadowOpacity: 0.25,
+    shadowRadius: 50,
+    shadowOffset: { width: 0, height: 25 },
     overflow: 'hidden',
   },
   greeting: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 16,
+    lineHeight: 26,
   },
   listContent: {
-    gap: 14,
+    gap: 16,
     paddingBottom: 4,
-  },
-  listItem: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'flex-start',
-  },
-  bullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 6,
-    flexShrink: 0,
   },
   listText: {
     fontSize: 13,
-    lineHeight: 20,
-    flex: 1,
+    lineHeight: 21,
   },
   acceptBtn: {
     width: '100%',
@@ -170,7 +159,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD700',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 6,
+    shadowColor: '#FFD700',
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 8,
   },
   acceptBtnText: {
     color: '#000',

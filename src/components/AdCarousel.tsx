@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, Dimensions, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
   runOnJS,
   SharedValue,
@@ -25,25 +25,22 @@ const INITIAL_CARDS = [
 
 function AdCard({
   index,
-  totalCards,
   dragX,
   isTop,
 }: {
   index: number;
-  totalCards: number;
   dragX: SharedValue<number>;
   isTop: boolean;
 }) {
   const cardStyle = useAnimatedStyle(() => {
-    const scale = 1 - index * 0.05;
-    const translateY = index * 15;
+    const scale = 1 - index * 0.06;
+    const translateY = index * 12;
     const rotateZ = isTop
-      ? (dragX.value / W) * 30
+      ? (dragX.value / W) * 28
       : index % 2 === 0
       ? -2
       : 2;
     const translateX = isTop ? dragX.value : 0;
-    const opacity = 1 - index * 0.2;
 
     return {
       transform: [
@@ -52,19 +49,35 @@ function AdCard({
         { translateX },
         { rotateZ: `${rotateZ}deg` },
       ],
-      opacity,
-      zIndex: totalCards - index,
     };
   });
 
   return (
     <Animated.View style={[styles.card, cardStyle]}>
       {/* Glossy top gradient overlay */}
-      <View style={styles.cardGloss} />
+      <LinearGradient
+        colors={['rgba(255,255,255,0.15)', 'transparent']}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={styles.cardGloss}
+      />
       <View style={styles.cardAccent} />
       <Text style={styles.cardText}>Реклама</Text>
     </Animated.View>
   );
+}
+
+function wrapperStyle(zIndex: number) {
+  return {
+    position: 'absolute' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    zIndex,
+  };
 }
 
 export function AdCarousel() {
@@ -102,39 +115,26 @@ export function AdCarousel() {
         const dir = e.translationX > 0 ? 'right' : 'left';
         runOnJS(animateOut)(dir);
       } else {
-        dragX.value = withSpring(0, { stiffness: 300, damping: 20 });
+        dragX.value = withTiming(0, { duration: 220 });
       }
     });
 
   return (
     <View style={styles.container}>
-      {cards.map((card, index) => (
-        index === 0 ? (
+      {cards.map((card, index) => {
+        const z = cards.length - index;
+        return index === 0 ? (
           <GestureDetector key={card.id} gesture={pan}>
-            <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-              <AdCard
-                index={index}
-                totalCards={cards.length}
-                dragX={dragX}
-                isTop={true}
-              />
+            <View style={wrapperStyle(z)} pointerEvents="box-none">
+              <AdCard index={index} dragX={dragX} isTop={true} />
             </View>
           </GestureDetector>
         ) : (
-          <View
-            key={card.id}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          >
-            <AdCard
-              index={index}
-              totalCards={cards.length}
-              dragX={dragX}
-              isTop={false}
-            />
+          <View key={card.id} style={wrapperStyle(z)} pointerEvents="none">
+            <AdCard index={index} dragX={dragX} isTop={false} />
           </View>
-        )
-      ))}
+        );
+      })}
     </View>
   );
 }
@@ -142,15 +142,14 @@ export function AdCarousel() {
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    height: 240,
+    height: 300,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 24,
+    marginTop: 12,
   },
   card: {
-    position: 'absolute',
-    width: 180,
-    height: 220,
+    width: 240,
+    height: 275,
     backgroundColor: '#111111',
     borderRadius: 28,
     borderWidth: 1,
@@ -170,7 +169,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: '50%',
-    backgroundColor: 'rgba(255,255,255,0.06)',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
   },
@@ -185,7 +183,7 @@ const styles = StyleSheet.create({
   },
   cardText: {
     color: 'white',
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '500',
     letterSpacing: 1,
   },

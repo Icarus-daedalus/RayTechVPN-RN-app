@@ -19,7 +19,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
 
   const btnBg =
-    theme === 'light' ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.25)';
+    theme === 'light' ? 'rgba(255,255,255,0.20)' : 'rgba(0,0,0,0.20)';
   const btnColor = theme === 'light' ? '#1e293b' : '#e2e8f0';
 
   return (
@@ -54,13 +54,9 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Main content — toggle centered */}
+      {/* Main content — toggle + carousel centered as a group */}
       <View style={styles.main}>
         <ConnectToggle />
-      </View>
-
-      {/* Ad carousel */}
-      <View style={styles.carouselWrap}>
         <AdCarousel />
       </View>
 
@@ -82,13 +78,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingBottom: 8,
   },
   iconBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -96,10 +92,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  carouselWrap: {
-    width: '100%',
-    // Leave space for bottom sheet collapsed state (~28% of screen)
-    marginBottom: '30%',
+    paddingBottom: '52%',
+    zIndex: 1,
   },
 });

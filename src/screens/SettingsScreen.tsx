@@ -36,7 +36,6 @@ function FaqItem({
   dividerColor,
   textColor,
   textSub,
-  rowBg,
 }: {
   item: (typeof FAQ_ITEMS)[0];
   index: number;
@@ -45,7 +44,6 @@ function FaqItem({
   dividerColor: string;
   textColor: string;
   textSub: string;
-  rowBg: string;
 }) {
   const height = useSharedValue(0);
   const opacity = useSharedValue(0);
@@ -88,7 +86,7 @@ function FaqItem({
       <TouchableOpacity
         onPress={onToggle}
         activeOpacity={0.75}
-        style={[styles.faqRow, { backgroundColor: rowBg }]}
+        style={styles.faqRow}
       >
         <Text style={[styles.faqQuestion, { color: textColor }]}>
           {item.q}
@@ -154,21 +152,12 @@ export default function SettingsScreen() {
   const [selectedLang, setSelectedLang] = useState('ru');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const labelColor = theme === 'light' ? '#64748b' : '#94a3b8';
-  const rowHoverBg = 'transparent';
+  const labelColor = theme === 'light' ? '#62748e' : '#90a1b9';
 
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       {/* Header */}
-      <View
-        style={[
-          styles.header,
-          {
-            backgroundColor: tk.headerBg,
-            borderBottomColor: tk.headerBorder,
-          },
-        ]}
-      >
+      <View style={styles.header}>
         <TouchableOpacity
           onPress={() => router.back()}
           activeOpacity={0.8}
@@ -177,7 +166,6 @@ export default function SettingsScreen() {
           <ChevronLeft size={22} color={tk.text} strokeWidth={2.5} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: tk.text }]}>Настройки</Text>
-        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -212,17 +200,7 @@ export default function SettingsScreen() {
                 </Text>
               </View>
               {selectedLang === lang.code && (
-                <View
-                  style={[
-                    styles.checkCircle,
-                    {
-                      shadowColor: '#FFD700',
-                      shadowOpacity: 0.5,
-                      shadowRadius: 6,
-                      shadowOffset: { width: 0, height: 0 },
-                    },
-                  ]}
-                >
+                <View style={styles.checkCircle}>
                   <Check size={12} color="#000" strokeWidth={3} />
                 </View>
               )}
@@ -248,7 +226,6 @@ export default function SettingsScreen() {
               dividerColor={tk.divider}
               textColor={tk.text}
               textSub={tk.textSecondary}
-              rowBg={rowHoverBg}
             />
           ))}
         </SectionCard>
@@ -294,10 +271,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
+    gap: 12,
   },
   backBtn: {
     width: 40,
@@ -330,10 +306,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
     shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
+    elevation: 0,
   },
   // Language
   langRow: {
@@ -344,7 +320,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   langLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  langFlag: { fontSize: 20 },
+  langFlag: { fontSize: 22 },
   langLabel: { fontSize: 16 },
   checkCircle: {
     width: 22,
@@ -353,7 +329,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFD700',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 2,
   },
   // FAQ
   faqItemWrap: {

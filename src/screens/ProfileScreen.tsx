@@ -12,7 +12,6 @@ import {
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { router } from 'expo-router';
@@ -46,10 +45,10 @@ function AuthSheet({
   useEffect(() => {
     if (mode) {
       setLocalMode(mode);
-      translateY.value = withSpring(0, { damping: 24, stiffness: 200 });
+      translateY.value = withTiming(0, { duration: 300 });
       backdropAlpha.value = withTiming(1, { duration: 250 });
     } else {
-      translateY.value = withSpring(600, { damping: 24, stiffness: 200 });
+      translateY.value = withTiming(600, { duration: 280 });
       backdropAlpha.value = withTiming(0, { duration: 200 });
     }
   }, [mode]);
@@ -250,15 +249,7 @@ export default function ProfileScreen() {
     >
       <View style={[styles.root, { paddingTop: insets.top }]}>
         {/* Header */}
-        <View
-          style={[
-            styles.header,
-            {
-              backgroundColor: tk.headerBg,
-              borderBottomColor: tk.headerBorder,
-            },
-          ]}
-        >
+        <View style={styles.header}>
           <TouchableOpacity
             onPress={() => router.back()}
             activeOpacity={0.8}
@@ -326,7 +317,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderBottomWidth: 1,
   },
   backBtn: {
     width: 40,

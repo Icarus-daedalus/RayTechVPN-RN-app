@@ -1,30 +1,49 @@
 import 'react-native-gesture-handler';
 import '../src/global.css';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
 import { Background } from '@/components/Background';
 import { useAppStore } from '@/store/useAppStore';
 
+const FADE_DURATION = 400;
+
 function ThemedBackground() {
   const theme = useAppStore((s) => s.theme);
+  const lightOpacity = useSharedValue(theme === 'light' ? 1 : 0);
 
-  if (theme === 'dark') {
-    return (
+  useEffect(() => {
+    lightOpacity.value = withTiming(theme === 'light' ? 1 : 0, {
+      duration: FADE_DURATION,
+    });
+  }, [theme]);
+
+  const lightStyle = useAnimatedStyle(() => ({
+    opacity: lightOpacity.value,
+  }));
+
+  return (
+    <>
+      {/* Dark gradient always underneath */}
       <LinearGradient
         colors={['#0F2027', '#203A43', '#2C5364']}
         style={StyleSheet.absoluteFill}
       />
-    );
-  }
-
-  return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: '#8BCCD8' }]} />
+      {/* Light solid color fades in/out on top */}
+      <Animated.View style={[StyleSheet.absoluteFill, lightStyle]}>
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#8BCCD8' }]} />
+      </Animated.View>
+    </>
   );
 }
 

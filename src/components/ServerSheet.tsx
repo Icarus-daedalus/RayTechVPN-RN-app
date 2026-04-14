@@ -11,7 +11,7 @@ import {
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
+  withTiming,
   runOnJS,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -22,17 +22,17 @@ import { SERVERS } from '@/constants/servers';
 import type { ServerItem } from '@/store/useAppStore';
 
 const { height: H } = Dimensions.get('window');
-const COLLAPSED_H = H * 0.28;
+const COLLAPSED_H = H * 0.25;
 const EXPANDED_H = H * 0.82;
-const COLLAPSED_OFFSET = H - COLLAPSED_H;
-const EXPANDED_OFFSET = H - EXPANDED_H;
-const SNAP_MID = (EXPANDED_OFFSET + COLLAPSED_OFFSET) / 2;
+// Sheet is exactly EXPANDED_H tall; translateY shifts it down to show only COLLAPSED_H
+const COLLAPSED_TRANSLATE = EXPANDED_H - COLLAPSED_H;
+const SNAP_MID = COLLAPSED_TRANSLATE / 2;
 
 function speedColor(speed: ServerItem['speed']) {
   return speed === 'Good' ? '#22c55e' : speed === 'Average' ? '#eab308' : '#ef4444';
 }
 
-const SPRING = { damping: 28, stiffness: 200 };
+const TIMING = { duration: 280 };
 
 export function ServerSheet() {
   const theme = useAppStore((s) => s.theme);
@@ -44,7 +44,7 @@ export function ServerSheet() {
   const [search, setSearch] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const translateY = useSharedValue(COLLAPSED_OFFSET);
+  const translateY = useSharedValue(COLLAPSED_TRANSLATE);
   const startY = useSharedValue(0);
 
   // These run on JS thread — only for React state
@@ -52,12 +52,12 @@ export function ServerSheet() {
   function jsCollapse() { setIsExpanded(false); }
 
   function snapExpand() {
-    translateY.value = withSpring(EXPANDED_OFFSET, SPRING);
+    translateY.value = withTiming(0, TIMING);
     runOnJS(jsExpand)();
   }
 
   function snapCollapse() {
-    translateY.value = withSpring(COLLAPSED_OFFSET, SPRING);
+    translateY.value = withTiming(COLLAPSED_TRANSLATE, TIMING);
     runOnJS(jsCollapse)();
   }
 
@@ -69,10 +69,7 @@ export function ServerSheet() {
     .onUpdate((e) => {
       'worklet';
       const next = startY.value + e.translationY;
-      translateY.value = Math.max(
-        EXPANDED_OFFSET,
-        Math.min(COLLAPSED_OFFSET, next)
-      );
+      translateY.value = Math.max(0, Math.min(COLLAPSED_TRANSLATE, next));
     })
     .onEnd((e) => {
       'worklet';
@@ -82,10 +79,10 @@ export function ServerSheet() {
         (e.translationY >= -60 && e.translationY <= 60 && translateY.value < SNAP_MID);
 
       if (shouldExpand) {
-        translateY.value = withSpring(EXPANDED_OFFSET, SPRING);
+        translateY.value = withTiming(0, TIMING);
         runOnJS(jsExpand)();
       } else {
-        translateY.value = withSpring(COLLAPSED_OFFSET, SPRING);
+        translateY.value = withTiming(COLLAPSED_TRANSLATE, TIMING);
         runOnJS(jsCollapse)();
       }
     });
@@ -150,26 +147,6 @@ export function ServerSheet() {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={[
-                styles.proxyBtn,
-                {
-                  backgroundColor:
-                    theme === 'light' ? '#F3E8FF' : 'rgba(130,0,219,0.2)',
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.proxyBtnText,
-                  { color: theme === 'light' ? '#8200DB' : '#C084FC' },
-                ]}
-              >
-                Настроить Прокси
-              </Text>
-            </TouchableOpacity>
-
             <View style={styles.pullHint}>
               <ChevronUp size={14} color={tk.textMuted} />
               <Text style={[styles.pullHintText, { color: tk.textMuted }]}>
@@ -216,7 +193,7 @@ export function ServerSheet() {
                       },
                     ]}
                   >
-                    {tab === 'vpn' ? 'VPN Серверы' : 'Прокси'}
+                    {tab === 'vpn' ? 'VPN Серверы' : 'Premium servers'}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -301,8 +278,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    top: 0,
     bottom: 0,
+    height: EXPANDED_H,
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     borderTopWidth: 1,
@@ -310,13 +287,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: -6 },
-    elevation: 20,
-    overflow: 'hidden',
+    zIndex: 20,
   },
   handleArea: {
     width: '100%',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 20,
   },
   handle: {
     width: 48,
@@ -367,13 +343,6 @@ const styles = StyleSheet.create({
   flag: { fontSize: 22 },
   serverName: { fontSize: 16, fontWeight: '500' },
   ping: { fontSize: 13 },
-  proxyBtn: {
-    width: '100%',
-    paddingVertical: 12,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  proxyBtnText: { fontSize: 14, fontWeight: '500' },
   pullHint: {
     flexDirection: 'row',
     alignItems: 'center',

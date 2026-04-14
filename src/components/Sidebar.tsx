@@ -6,13 +6,15 @@ import {
   StyleSheet,
   Dimensions,
   ScrollView,
-  Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
+  runOnJS,
 } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import {
@@ -23,13 +25,14 @@ import {
   Crown,
   Check,
   Zap,
-  ChevronLeft,
+  Mail,
+  Share2,
 } from 'lucide-react-native';
 import { useAppStore } from '@/store/useAppStore';
 import { t } from '@/theme/tokens';
 
 const { width: W, height: H } = Dimensions.get('window');
-const SIDEBAR_WIDTH = Math.min(W * 0.82, 320);
+const SIDEBAR_WIDTH = Math.min(W * 0.80, 320);
 
 interface SidebarProps {
   isOpen: boolean;
@@ -49,17 +52,45 @@ function SubscriptionSheet({
   const [selectedPlan, setSelectedPlan] = useState(1);
 
   const translateY = useSharedValue(H);
+  const startY = useSharedValue(0);
   const backdropAlpha = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
-      translateY.value = withSpring(0, { damping: 28, stiffness: 220 });
+      translateY.value = withTiming(0, { duration: 300 });
       backdropAlpha.value = withTiming(1, { duration: 250 });
     } else {
-      translateY.value = withSpring(H, { damping: 28, stiffness: 220 });
+      translateY.value = withTiming(H, { duration: 280 });
       backdropAlpha.value = withTiming(0, { duration: 200 });
     }
   }, [visible]);
+
+  const pan = Gesture.Pan()
+    .onBegin(() => {
+      'worklet';
+      startY.value = translateY.value;
+    })
+    .onUpdate((e) => {
+      'worklet';
+      translateY.value = startY.value + e.translationY;
+    })
+    .onEnd((e) => {
+      'worklet';
+      const shouldCloseDown = e.translationY > 80 || e.velocityY > 500;
+      const shouldCloseUp = e.translationY < -80 || e.velocityY < -500;
+
+      if (shouldCloseDown) {
+        translateY.value = withTiming(H, { duration: 280 });
+        backdropAlpha.value = withTiming(0, { duration: 200 });
+        runOnJS(onClose)();
+      } else if (shouldCloseUp) {
+        translateY.value = withTiming(-H, { duration: 280 });
+        backdropAlpha.value = withTiming(0, { duration: 200 });
+        runOnJS(onClose)();
+      } else {
+        translateY.value = withTiming(0, { duration: 260 });
+      }
+    });
 
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
@@ -115,22 +146,17 @@ function SubscriptionSheet({
         ]}
       >
         {/* Handle */}
-        <View style={styles.subHandle}>
-          <View style={[styles.handleBar, { backgroundColor: tk.dragHandle }]} />
-        </View>
-
-        {/* Header */}
-        <View style={styles.subHeader}>
+        <GestureDetector gesture={pan}>
           <TouchableOpacity
             onPress={onClose}
-            style={[styles.backBtn, { backgroundColor: tk.btnIconBg }]}
+            activeOpacity={1}
+            style={styles.subHandle}
           >
-            <ChevronLeft size={22} color={tk.text} strokeWidth={2.5} />
+            <View style={[styles.handleBar, { backgroundColor: tk.dragHandle }]} />
           </TouchableOpacity>
-          <Text style={[styles.subTitle, { color: tk.text }]}>Подписка</Text>
-          <View style={{ width: 40 }} />
-        </View>
+        </GestureDetector>
 
+        {/* Header */}
         <ScrollView
           contentContainerStyle={styles.subScrollContent}
           showsVerticalScrollIndicator={false}
@@ -138,6 +164,10 @@ function SubscriptionSheet({
           {/* Crown badge */}
           <View style={styles.crownWrap}>
             <View style={styles.crownBg}>
+              <LinearGradient
+                colors={['#FFD700', '#FFC700', '#FFB700']}
+                style={[StyleSheet.absoluteFill, { borderRadius: 24 }]}
+              />
               <Crown size={38} color="#000" />
             </View>
             <View style={styles.crownBadge}>
@@ -233,10 +263,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const backdropAlpha = useSharedValue(0);
 
   useEffect(() => {
-    sideX.value = withSpring(isOpen ? 0 : -SIDEBAR_WIDTH, {
-      damping: 30,
-      stiffness: 250,
-    });
+    sideX.value = withTiming(isOpen ? 0 : -SIDEBAR_WIDTH, { duration: 280 });
     backdropAlpha.value = withTiming(isOpen ? 1 : 0, { duration: 280 });
   }, [isOpen]);
 
@@ -270,6 +297,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       label: 'Настройки',
       onPress: () => navAndClose('/settings'),
     },
+    {
+      icon: <Mail size={20} color={tk.text} />,
+      label: 'Связаться с нами',
+      onPress: () => {},
+    },
+    {
+      icon: <Share2 size={20} color={tk.text} />,
+      label: 'Пригласить друга',
+      onPress: () => {},
+    },
   ];
 
   return (
@@ -292,7 +329,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         style={[
           styles.panel,
           {
-            backgroundColor: tk.sidebarBg,
+            backgroundColor: 'transparent',
             borderRightColor: tk.surfaceBorder,
             width: SIDEBAR_WIDTH,
             zIndex: 70,
@@ -300,19 +337,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           sideStyle,
         ]}
       >
+        <BlurView
+          intensity={theme === 'light' ? 80 : 65}
+          tint={theme === 'light' ? 'light' : 'dark'}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: tk.sidebarBg }]} />
+
         {/* Profile header */}
         <View style={styles.profileHeader}>
-          <View style={styles.avatarRow}>
-            <View style={styles.avatar}>
-              <User size={24} color="white" />
-            </View>
-            <View style={styles.userInfo}>
-              <Text style={[styles.userName, { color: tk.text }]}>Alex Ray</Text>
-              <Text style={[styles.userEmail, { color: tk.textSecondary }]}>
-                alex@raytech.vpn
-              </Text>
-            </View>
-          </View>
+          <Text style={[styles.menuTitle, { color: tk.text }]}>Меню</Text>
           <TouchableOpacity
             onPress={onClose}
             style={[styles.closeBtn, { backgroundColor: tk.surface }]}
@@ -388,7 +422,8 @@ const styles = StyleSheet.create({
     shadowRadius: 25,
     shadowOffset: { width: 10, height: 0 },
     elevation: 20,
-    paddingTop: Platform.OS === 'android' ? 48 : 56,
+    paddingTop: 48,
+    overflow: 'hidden',
   },
   profileHeader: {
     flexDirection: 'row',
@@ -397,29 +432,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 24,
   },
-  avatarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#4A90D9',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.5)',
-  },
-  userInfo: { gap: 2 },
-  userName: { fontSize: 17, fontWeight: '600' },
-  userEmail: { fontSize: 12 },
+  menuTitle: { fontSize: 24, fontWeight: '600' },
   closeBtn: {
     width: 36,
     height: 36,
@@ -442,7 +455,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   menuItemLabel: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '500',
   },
   menuItemValue: {
@@ -455,7 +468,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   version: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
   },
   // ─── Subscription Sheet ───
@@ -475,9 +488,10 @@ const styles = StyleSheet.create({
     elevation: 25,
   },
   subHandle: {
+    width: '100%',
     alignItems: 'center',
     paddingTop: 12,
-    paddingBottom: 4,
+    paddingBottom: 12,
   },
   handleBar: {
     width: 48,
@@ -485,9 +499,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   subHeader: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 8,
@@ -517,9 +529,9 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 24,
-    backgroundColor: '#FFD700',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
     shadowColor: '#FFD700',
     shadowOpacity: 0.4,
     shadowRadius: 20,
@@ -537,7 +549,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   premiumTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
     textAlign: 'center',
     marginBottom: 6,

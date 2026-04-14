@@ -8,6 +8,8 @@ import Animated, {
   withTiming,
   withDelay,
 } from 'react-native-reanimated';
+
+const FADE_DURATION = 400;
 import Svg, { Path } from 'react-native-svg';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -326,33 +328,64 @@ export function Background() {
     []
   );
 
-  if (theme === 'light') {
-    return (
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        {/* Soft glow blobs */}
-        <View
-          style={{
-            position: 'absolute',
-            top: -H * 0.1,
-            left: -W * 0.15,
-            width: 300,
-            height: 300,
-            borderRadius: 150,
-            backgroundColor: 'rgba(255,255,255,0.2)',
-          }}
-        />
-        <View
-          style={{
-            position: 'absolute',
-            top: H * 0.2,
-            right: -W * 0.15,
-            width: 350,
-            height: 350,
-            borderRadius: 175,
-            backgroundColor: 'rgba(255,255,255,0.1)',
-          }}
-        />
-        {/* Clouds */}
+  const lightOpacity = useSharedValue(theme === 'light' ? 1 : 0);
+
+  useEffect(() => {
+    lightOpacity.value = withTiming(theme === 'light' ? 1 : 0, {
+      duration: FADE_DURATION,
+    });
+  }, [theme]);
+
+  const lightStyle = useAnimatedStyle(() => ({ opacity: lightOpacity.value }));
+  const darkStyle = useAnimatedStyle(() => ({ opacity: 1 - lightOpacity.value }));
+
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      {/* Dark theme — stars */}
+      <Animated.View style={[StyleSheet.absoluteFill, darkStyle]}>
+        {staticStars.map((s) => (
+          <View
+            key={s.id}
+            style={{
+              position: 'absolute',
+              width: s.size,
+              height: s.size,
+              top: `${s.top}%` as unknown as number,
+              left: `${s.left}%` as unknown as number,
+              borderRadius: s.size / 2,
+              backgroundColor: 'white',
+              opacity: s.opacity,
+            }}
+          />
+        ))}
+        {twinkleStars.map((s) => (
+          <TwinkleStar
+            key={`tw-${s.id}`}
+            size={s.size}
+            top={s.top}
+            left={s.left}
+            duration={s.duration}
+            delay={s.delay}
+          />
+        ))}
+        {shootingStars.map((s) => (
+          <ShootingStar
+            key={`sh-${s.id}`}
+            startTop={s.startTop}
+            startLeft={s.startLeft}
+            dx={s.dx}
+            dy={s.dy}
+            tailLen={s.tailLen}
+            angle={s.angle}
+            duration={s.duration}
+            repeatDelay={s.repeatDelay}
+            delay={s.delay}
+          />
+        ))}
+      </Animated.View>
+
+      {/* Light theme — clouds */}
+      <Animated.View style={[StyleSheet.absoluteFill, lightStyle]}>
         <AnimatedCloud
           x={-W * 0.3}
           y={H * 0.08}
@@ -386,54 +419,7 @@ export function Background() {
           duration={20}
           delay={1}
         />
-      </View>
-    );
-  }
-
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {/* Static stars */}
-      {staticStars.map((s) => (
-        <View
-          key={s.id}
-          style={{
-            position: 'absolute',
-            width: s.size,
-            height: s.size,
-            top: `${s.top}%` as unknown as number,
-            left: `${s.left}%` as unknown as number,
-            borderRadius: s.size / 2,
-            backgroundColor: 'white',
-            opacity: s.opacity,
-          }}
-        />
-      ))}
-      {/* Twinkling stars */}
-      {twinkleStars.map((s) => (
-        <TwinkleStar
-          key={`tw-${s.id}`}
-          size={s.size}
-          top={s.top}
-          left={s.left}
-          duration={s.duration}
-          delay={s.delay}
-        />
-      ))}
-      {/* Shooting stars */}
-      {shootingStars.map((s) => (
-        <ShootingStar
-          key={`sh-${s.id}`}
-          startTop={s.startTop}
-          startLeft={s.startLeft}
-          dx={s.dx}
-          dy={s.dy}
-          tailLen={s.tailLen}
-          angle={s.angle}
-          duration={s.duration}
-          repeatDelay={s.repeatDelay}
-          delay={s.delay}
-        />
-      ))}
+      </Animated.View>
     </View>
   );
 }
