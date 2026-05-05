@@ -37,6 +37,7 @@
     "react-native-svg": "15.12.1",
     "react-native-web": "^0.21.0",
     "react-native-wireguard-vpn": "^1.0.22",
+    "vpn-permission": "file:./modules/vpn-permission",
     "tailwindcss": "^3.4.19",
     "zustand": "^5.0.12"
   },

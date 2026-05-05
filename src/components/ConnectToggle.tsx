@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Zap } from 'lucide-react-native';
 import { useAppStore } from '@/store/useAppStore';
-import { t } from '@/theme/tokens';
+import { useVpnController } from '@/vpn/useVpnController';
 
 const CONTAINER_WIDTH = 168;
 const KNOB_SIZE = 60;
@@ -19,9 +19,16 @@ const KNOB_TRAVEL = CONTAINER_WIDTH - KNOB_SIZE - PADDING * 2;
 
 export function ConnectToggle() {
   const theme = useAppStore((s) => s.theme);
-  const vpnConnected = useAppStore((s) => s.vpnConnected);
-  const toggleVpn = useAppStore((s) => s.toggleVpn);
-  const tk = t(theme);
+  const { vpnConnected, vpnBusy, requestConnect, requestDisconnect } = useVpnController();
+
+  const onToggle = () => {
+    if (vpnBusy) return;
+    if (vpnConnected) {
+      void requestDisconnect();
+    } else {
+      void requestConnect();
+    }
+  };
 
   const offset = useSharedValue(0);
   const glowOpacity = useSharedValue(0);
@@ -79,7 +86,8 @@ export function ConnectToggle() {
   return (
     <View style={styles.wrapper}>
       <TouchableOpacity
-        onPress={toggleVpn}
+        onPress={onToggle}
+        disabled={vpnBusy}
         activeOpacity={0.9}
         style={[
           styles.container,
@@ -117,7 +125,7 @@ export function ConnectToggle() {
       </TouchableOpacity>
 
       <Text style={[styles.status, { color: statusColor }]}>
-        {vpnConnected ? 'Подключено' : 'Отключено'}
+        {vpnBusy ? 'Подключение…' : vpnConnected ? 'Подключено' : 'Отключено'}
       </Text>
     </View>
   );

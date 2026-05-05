@@ -14,9 +14,13 @@ interface AppState {
   // Theme
   theme: Theme;
   toggleTheme: () => void;
-  // VPN connection (stub)
+  // VPN (native WireGuard in dev build; see README)
   vpnConnected: boolean;
-  toggleVpn: () => void;
+  vpnBusy: boolean;
+  vpnError: string | null;
+  setVpnConnected: (value: boolean) => void;
+  setVpnBusy: (value: boolean) => void;
+  setVpnError: (value: string | null) => void;
   // Selected server
   selectedServer: ServerItem;
   setSelectedServer: (server: ServerItem) => void;
@@ -40,7 +44,11 @@ export const useAppStore = create<AppState>()(
         set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
 
       vpnConnected: false,
-      toggleVpn: () => set((state) => ({ vpnConnected: !state.vpnConnected })),
+      vpnBusy: false,
+      vpnError: null,
+      setVpnConnected: (value) => set({ vpnConnected: value }),
+      setVpnBusy: (value) => set({ vpnBusy: value }),
+      setVpnError: (value) => set({ vpnError: value }),
 
       selectedServer: DEFAULT_SERVER,
       setSelectedServer: (server) => set({ selectedServer: server }),

@@ -3,6 +3,14 @@
 # dependencies
 node_modules/
 
+# Local Expo modules (sources tracked; Gradle/iOS build outputs — нет)
+modules/**/android/build/
+modules/**/android/.gradle/
+modules/**/android/.cxx/
+modules/**/android/local.properties
+modules/**/ios/build/
+modules/**/ios/Pods/
+
 # Expo
 .expo/
 dist/

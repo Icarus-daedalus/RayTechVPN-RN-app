@@ -5,7 +5,8 @@
       "typedRoutes": true
     },
     "plugins": [
-      ["expo-router", { "root": "./app" }]
+      ["expo-router", { "root": "./app" }],
+      "react-native-wireguard-vpn"
     ],
     "name": "RayTechVPN",
     "slug": "RayTechVPN",

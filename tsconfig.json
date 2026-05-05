@@ -5,9 +5,8 @@
     "module": "esnext",
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"],
+      "vpn-permission": ["./modules/vpn-permission/src/index.ts"]
     }
   },
   "include": [
